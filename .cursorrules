@@ -1,0 +1,210 @@
+# Database Explorer - Cursor Rules
+
+## Project Overview
+
+This is a VS Code extension for exploring and managing databases. It uses a plugin-based driver architecture to support multiple database types (SQL, NoSQL, time-series).
+
+## Tech Stack
+
+- **Language**: TypeScript (strict mode)
+- **Runtime**: VS Code Extension Host (Node.js)
+- **Build**: Webpack
+- **Package Manager**: npm
+- **Linting**: ESLint with typescript-eslint
+- **Testing**: @vscode/test-cli with Mocha
+
+## Project Structure
+
+```
+src/
+├── extension.ts           # Extension entry point (activate/deactivate)
+├── types.ts               # Central type definitions
+├── drivers/               # Database driver implementations
+│   ├── baseDriver.ts      # Abstract base class for all drivers
+│   ├── capabilities.ts    # Driver capability presets
+│   ├── driverFactory.ts   # Static factory for driver registration
+│   ├── driverRegistry.ts  # Manages active driver instances
+│   ├── index.ts           # Barrel export (triggers registration)
+│   └── *Driver.ts         # Individual driver implementations
+├── networking/            # Advanced connection features
+│   ├── sshTunnel.ts       # SSH tunnel management
+│   ├── replicaRouter.ts   # Read/write replica routing
+│   └── connectionWrapper.ts
+├── storage/
+│   └── connectionStore.ts # Persists connection configs
+└── views/
+    ├── explorerTree.ts    # TreeDataProvider for sidebar
+    ├── queryPanel.ts      # WebviewPanel for query execution
+    └── statusBar.ts       # Status bar for last viewed table
+```
+
+## Architecture Patterns
+
+### 1. Self-Registering Driver Pattern
+
+Drivers register themselves with the `DriverFactory` at module load time:
+
+```typescript
+// In myDriver.ts
+export const myDriverMetadata: DriverMetadata = { ... };
+export class MyDriver extends BaseDbDriver { ... }
+
+// This runs when the module is imported
+DriverFactory.register(myDriverMetadata, MyDriver);
+```
+
+To add a new driver:
+1. Create `src/drivers/myDriver.ts`
+2. Extend `BaseDbDriver`
+3. Define `DriverMetadata` with capabilities
+4. Call `DriverFactory.register()` at module level
+5. Import in `driverRegistry.ts`
+
+### 2. Capability-Based Features
+
+Use `DriverCapabilities` to control UI behavior:
+
+```typescript
+const caps = driver.getMetadata().capabilities;
+if (caps.supportsDelete) {
+  // Show delete option in context menu
+}
+```
+
+### 3. Read-Only Mode
+
+Write operations must check read-only mode:
+
+```typescript
+// In driver methods that write data:
+this.assertWriteAllowed();  // Throws if config.readOnly is true
+
+// For SQL queries:
+this.validateQuery(sql);    // Throws if write query and readOnly
+```
+
+## Coding Conventions
+
+### TypeScript
+
+- Use strict TypeScript (`"strict": true` in tsconfig)
+- Prefer interfaces over type aliases for object shapes
+- Use `unknown` instead of `any` where possible
+- Use `readonly` for immutable properties
+- Export types from `types.ts`, not individual files
+
+### Naming
+
+- **Files**: camelCase (`driverFactory.ts`, `queryPanel.ts`)
+- **Classes**: PascalCase (`PostgresDriver`, `BaseDbDriver`)
+- **Interfaces**: PascalCase, no `I` prefix (`DriverMetadata`, not `IDriverMetadata`)
+- **Constants**: UPPER_SNAKE_CASE for capability presets (`SQL_FULL_CAPABILITIES`)
+- **Private members**: No underscore prefix, use `private` keyword
+
+### Async/Await
+
+- Always use async/await, never raw Promises with `.then()`
+- Handle errors with try/catch, not `.catch()`
+- Driver methods are async and return Promise types
+
+### Error Handling
+
+- Throw descriptive Error objects with context
+- Include operation name in error messages
+- Use `vscode.window.showErrorMessage()` for user-facing errors
+
+```typescript
+throw new Error(`Failed to connect to ${this.config.name}: ${err.message}`);
+```
+
+### Comments
+
+- Use JSDoc for public APIs
+- Section separators with `// =====` for large files
+- Keep inline comments minimal and focused on "why"
+
+### VS Code API
+
+- Use `vscode.commands.registerCommand()` for commands
+- Use `vscode.window.createWebviewPanel()` for custom UIs
+- Use `context.secrets` for password storage
+- Use `context.workspaceState` for persistence
+- Dispose resources properly in `deactivate()`
+
+## Driver Implementation Checklist
+
+When creating a new driver:
+
+1. [ ] Create file in `src/drivers/`
+2. [ ] Import and extend `BaseDbDriver`
+3. [ ] Define `DriverMetadata` constant
+4. [ ] Implement `getMetadata()`, `connect()`, `disconnect()`
+5. [ ] Override methods based on capabilities
+6. [ ] Add `override` keyword to overridden methods
+7. [ ] Call `this.validateQuery(sql)` in `executeQuery()`
+8. [ ] Call `this.assertWriteAllowed()` in write methods
+9. [ ] Register with `DriverFactory.register()`
+10. [ ] Import in `driverRegistry.ts`
+11. [ ] Add npm dependencies to `package.json`
+12. [ ] Add types to `devDependencies` if available
+
+## Context Menu Configuration
+
+Context menus are defined in `package.json` under `contributes.menus.view/item/context`.
+
+Use regex patterns for capability-based visibility:
+
+```json
+{
+  "command": "database-explorer.deleteRows",
+  "when": "view == databaseExplorer && viewItem =~ /^table.*deletable/"
+}
+```
+
+Set `contextValue` in tree items based on capabilities:
+
+```typescript
+contextValue = 'table-deletable-truncatable-droppable';
+```
+## Settings Configuration
+
+Settings are defined in `package.json` under `contributes.configuration`. Access them in code:
+
+```typescript
+const config = vscode.workspace.getConfiguration('databaseExplorer');
+const rowLimit = config.get<number>('defaultRowLimit', 100);
+const confirmDestructive = config.get<boolean>('confirmDestructiveOperations', true);
+```
+
+Key settings:
+- `databaseExplorer.defaultRowLimit` - Row preview limit
+- `databaseExplorer.confirmDestructiveOperations` - Confirm dangerous operations
+- `databaseExplorer.queryTimeout` - Query timeout in ms
+- `databaseExplorer.showStatusBarItem` - Toggle status bar visibility
+
+To open settings filtered to this extension:
+```typescript
+vscode.commands.executeCommand('workbench.action.openSettings', 'databaseExplorer');
+```
+
+## Testing
+
+Run tests with:
+
+```bash
+npm run pretest  # Compile and lint
+npm test         # Run test suite
+```
+
+## Common Pitfalls
+
+1. **Forgetting to import driver** - New drivers must be imported in `driverRegistry.ts`
+2. **Missing `override` keyword** - TypeScript requires `override` for inherited methods
+3. **Not validating read-only mode** - Always call `assertWriteAllowed()` or `validateQuery()`
+4. **Leaking passwords** - Never log or store passwords; use SecretStorage
+5. **Not disposing resources** - Add disposables to `context.subscriptions`
+
+## Reference Documentation
+
+- [Driver Architecture](docs/DRIVER_ARCHITECTURE.md) - Detailed driver system docs
+- [VS Code Extension API](https://code.visualstudio.com/api) - Official VS Code docs

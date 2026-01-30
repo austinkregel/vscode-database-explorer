@@ -1,0 +1,458 @@
+{
+  "name": "database-explorer",
+  "displayName": "Database Explorer",
+  "description": "A custom database explorer, inspired by Jetbrains",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.105.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "database-explorer-container",
+          "title": "Database Explorer",
+          "icon": "$(database)"
+        }
+      ]
+    },
+    "views": {
+      "database-explorer-container": [
+        {
+          "id": "databaseExplorer",
+          "name": "Connections",
+          "icon": "$(database)",
+          "contextualTitle": "Database Explorer"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "databaseExplorer",
+        "contents": "No data sources\n\n[Create data source...](command:database-explorer.addConnection) (Alt+Insert)",
+        "when": "!databaseExplorer.hasConnections"
+      }
+    ],
+    "commands": [
+      {
+        "command": "database-explorer.addConnection",
+        "title": "Add Connection",
+        "icon": "$(add)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.editConnection",
+        "title": "Edit Connection",
+        "icon": "$(edit)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.removeConnection",
+        "title": "Remove Connection",
+        "icon": "$(trash)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.connect",
+        "title": "Connect",
+        "icon": "$(plug)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.disconnect",
+        "title": "Disconnect",
+        "icon": "$(debug-disconnect)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.openQuery",
+        "title": "$(file-code) New Query",
+        "icon": "$(file-code)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.openQueryLimit250",
+        "title": "$(list-flat) Open Query (Limit 250)",
+        "icon": "$(list-flat)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.openDDL",
+        "title": "$(code) Show DDL",
+        "icon": "$(code)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.countRows",
+        "title": "$(symbol-number) Count Rows",
+        "icon": "$(symbol-number)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.previewTop100",
+        "title": "$(preview) Preview Top 100",
+        "icon": "$(preview)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.exportCsv",
+        "title": "$(export) Export CSV",
+        "icon": "$(export)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.copyTableName",
+        "title": "$(copy) Copy Table Name",
+        "icon": "$(copy)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.copyQualifiedName",
+        "title": "$(copy) Copy Qualified Name",
+        "icon": "$(copy)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.copyColumnNames",
+        "title": "$(copy) Copy Column Names",
+        "icon": "$(copy)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.refreshTable",
+        "title": "$(refresh) Refresh Table",
+        "icon": "$(refresh)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.deleteRows",
+        "title": "$(trash) Delete Rows (WHERE...)",
+        "icon": "$(trash)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.truncateTable",
+        "title": "$(warning) Truncate Table",
+        "icon": "$(warning)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.dropTable",
+        "title": "$(warning) Drop Table",
+        "icon": "$(warning)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.dropView",
+        "title": "$(warning) Drop View",
+        "icon": "$(warning)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.refreshExplorer",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.reopenLastTable",
+        "title": "Reopen Last Viewed Table",
+        "icon": "$(table)",
+        "category": "Database Explorer"
+      },
+      {
+        "command": "database-explorer.openSettings",
+        "title": "Open Settings",
+        "icon": "$(gear)",
+        "category": "Database Explorer"
+      }
+    ],
+    "configuration": {
+      "title": "Database Explorer",
+      "properties": {
+        "databaseExplorer.defaultRowLimit": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Default number of rows to fetch when previewing a table"
+        },
+        "databaseExplorer.confirmDestructiveOperations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show confirmation dialogs for destructive operations (DROP, TRUNCATE, DELETE)"
+        },
+        "databaseExplorer.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect to databases when expanding a connection in the tree"
+        },
+        "databaseExplorer.queryTimeout": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "maximum": 300000,
+          "description": "Query timeout in milliseconds (default: 30 seconds)"
+        },
+        "databaseExplorer.showStatusBarItem": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the last viewed table in the status bar"
+        },
+        "databaseExplorer.defaultExportFormat": {
+          "type": "string",
+          "default": "csv",
+          "enum": [
+            "csv",
+            "json",
+            "sql"
+          ],
+          "enumDescriptions": [
+            "Comma-separated values",
+            "JSON array of objects",
+            "SQL INSERT statements"
+          ],
+          "description": "Default format for exporting query results"
+        },
+        "databaseExplorer.editor.fontSize": {
+          "type": "number",
+          "default": 14,
+          "minimum": 8,
+          "maximum": 32,
+          "description": "Font size for the SQL query editor"
+        },
+        "databaseExplorer.editor.wordWrap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable word wrap in the SQL query editor"
+        },
+        "databaseExplorer.connections.showSchemaInTree": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show schema names in the tree view (for databases that support schemas)"
+        },
+        "databaseExplorer.connections.sortTablesAlphabetically": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sort tables and views alphabetically in the tree view"
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "database-explorer.addConnection",
+          "when": "view == databaseExplorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "database-explorer.refreshExplorer",
+          "when": "view == databaseExplorer",
+          "group": "navigation@2"
+        },
+        {
+          "command": "database-explorer.openSettings",
+          "when": "view == databaseExplorer",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "database-explorer.connect",
+          "when": "view == databaseExplorer && viewItem == connection-disconnected",
+          "group": "inline"
+        },
+        {
+          "command": "database-explorer.disconnect",
+          "when": "view == databaseExplorer && viewItem == connection-connected",
+          "group": "inline"
+        },
+        {
+          "command": "database-explorer.openQuery",
+          "when": "view == databaseExplorer && viewItem =~ /^connection/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.editConnection",
+          "when": "view == databaseExplorer && viewItem =~ /^connection/",
+          "group": "modification"
+        },
+        {
+          "command": "database-explorer.removeConnection",
+          "when": "view == databaseExplorer && viewItem =~ /^connection/",
+          "group": "modification"
+        },
+        {
+          "command": "database-explorer.openQuery",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.openQueryLimit250",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.openDDL",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.previewTop100",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.countRows",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.exportCsv",
+          "when": "view == databaseExplorer && viewItem =~ /^table.*exportable/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyTableName",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyQualifiedName",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyColumnNames",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.refreshTable",
+          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.deleteRows",
+          "when": "view == databaseExplorer && viewItem =~ /^table.*deletable/",
+          "group": "modification"
+        },
+        {
+          "command": "database-explorer.truncateTable",
+          "when": "view == databaseExplorer && viewItem =~ /^table.*truncatable/",
+          "group": "modification"
+        },
+        {
+          "command": "database-explorer.dropTable",
+          "when": "view == databaseExplorer && viewItem =~ /^table.*droppable/",
+          "group": "modification"
+        },
+        {
+          "command": "database-explorer.openQuery",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.openQueryLimit250",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.openDDL",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.previewTop100",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.countRows",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.exportCsv",
+          "when": "view == databaseExplorer && viewItem =~ /^view.*exportable/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyTableName",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyQualifiedName",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.copyColumnNames",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.refreshTable",
+          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "group": "navigation"
+        },
+        {
+          "command": "database-explorer.dropView",
+          "when": "view == databaseExplorer && viewItem =~ /^view.*droppable/",
+          "group": "modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/mssql": "^9.1.9",
+    "@types/node": "22.x",
+    "@types/pg": "^8.10.9",
+    "@types/sql.js": "^1.4.9",
+    "@types/ssh2": "^1.15.0",
+    "@types/vscode": "^1.108.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.2",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@aws-sdk/credential-providers": "^3.980.0",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "@mongodb-js/zstd": "^2.0.1",
+    "aws4": "^1.13.2",
+    "gcp-metadata": "^5.3.0",
+    "kerberos": "^2.2.2",
+    "mongodb": "^6.3.0",
+    "mongodb-client-encryption": "^6.5.0",
+    "mssql": "^10.0.2",
+    "mysql2": "^3.6.5",
+    "pg": "^8.11.3",
+    "pg-native": "^3.5.2",
+    "snappy": "^7.3.3",
+    "socks": "^2.8.7",
+    "sql.js": "^1.10.2",
+    "ssh2": "^1.15.0"
+  }
+}
