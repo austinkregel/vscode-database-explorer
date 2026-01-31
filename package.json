@@ -4,7 +4,7 @@
   "description": "A custom database explorer, inspired by Jetbrains",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.105.1"
+    "vscode": "^1.108.1"
   },
   "categories": [
     "Other"

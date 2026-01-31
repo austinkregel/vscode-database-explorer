@@ -2,7 +2,7 @@
 
 A powerful VS Code extension for exploring and managing databases, inspired by JetBrains DataGrip.
 
-![VS Code Version](https://img.shields.io/badge/VS%20Code-1.105%2B-blue)
+![VS Code Version](https://img.shields.io/badge/VS%20Code-1.108%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Databases](https://img.shields.io/badge/databases-7%2B-orange)
 
@@ -206,7 +206,7 @@ See [Driver Architecture Documentation](docs/DRIVER_ARCHITECTURE.md) for complet
 
 ## Requirements
 
-- VS Code 1.105.1 or higher
+- VS Code 1.108.1 or higher
 - Node.js 22.x or higher (for development)
 
 ## Known Limitations
