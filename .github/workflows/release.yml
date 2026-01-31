@@ -41,7 +41,10 @@ jobs:
         run: npm install -g @vscode/vsce
 
       - name: Package extension
-        run: vsce package --out database-explorer.vsix
+        run: |
+          vsce package --out database-explorer.vsix \
+            --baseContentUrl "https://github.com/${{ github.repository }}/raw/HEAD/" \
+            --baseImagesUrl "https://github.com/${{ github.repository }}/raw/HEAD/"
 
       - name: Get version from package.json
         id: pkg_version
