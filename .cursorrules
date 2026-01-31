@@ -8,7 +8,7 @@ This is a VS Code extension for exploring and managing databases. It uses a plug
 
 - **Language**: TypeScript (strict mode)
 - **Runtime**: VS Code Extension Host (Node.js)
-- **Build**: Webpack
+- **Build**: esbuild (fast bundler, ~150ms builds)
 - **Package Manager**: npm
 - **Linting**: ESLint with typescript-eslint
 - **Testing**: @vscode/test-cli with Mocha
@@ -186,6 +186,31 @@ To open settings filtered to this extension:
 ```typescript
 vscode.commands.executeCommand('workbench.action.openSettings', 'databaseExplorer');
 ```
+
+## Build System
+
+The extension uses **esbuild** for fast bundling (~150ms builds).
+
+### Build Commands
+
+```bash
+npm run compile    # Development build with source maps
+npm run watch      # Watch mode for development
+npm run package    # Production build (minified, no source maps)
+```
+
+### Native Module Handling
+
+Some dependencies have native components (`.node` files) that can't be bundled:
+
+1. **Externalized modules** - Listed in `esbuild.js` and loaded from `node_modules` at runtime
+2. **Graceful loading** - `driverRegistry.ts` uses try-catch to handle missing drivers
+3. **Production packaging** - `.vscodeignore` includes `node_modules` but excludes dev dependencies
+
+To add a native dependency:
+1. Add to `dependencies` in `package.json`
+2. Add to `externalModules` array in `esbuild.js`
+3. Ensure it's not excluded in `.vscodeignore`
 
 ## Testing
 

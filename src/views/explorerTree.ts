@@ -345,8 +345,8 @@ export class ExplorerTreeProvider implements vscode.TreeDataProvider<ExplorerTre
 
 export class ExplorerTreeItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public override readonly label: string,
+    public override readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly nodeData: TreeNodeData
   ) {
     super(label, collapsibleState);

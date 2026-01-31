@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection, Document } from 'mongodb';
+import { MongoClient, Db, Document } from 'mongodb';
 import { 
   DriverMetadata, 
   SchemaInfo, 
@@ -107,8 +107,8 @@ export class MongoDriver extends BaseDbDriver {
     const admin = this.client.db().admin();
     const result = await admin.listDatabases();
     return result.databases
-      .filter(db => !['admin', 'config', 'local'].includes(db.name))
-      .map(db => ({ name: db.name }));
+      .filter((db: { name: string }) => !['admin', 'config', 'local'].includes(db.name))
+      .map((db: { name: string }) => ({ name: db.name }));
   }
 
   override async getTables(schema?: string): Promise<TableInfo[]> {
@@ -127,7 +127,7 @@ export class MongoDriver extends BaseDbDriver {
     }
     
     const collections = await this.db.listCollections({ type: 'view' }).toArray();
-    return collections.map(col => ({
+    return collections.map((col: { name: string }) => ({
       name: col.name,
       schema: this.config.database as string
     }));
@@ -286,7 +286,7 @@ export class MongoDriver extends BaseDbDriver {
     }
     
     const collections = await this.db.listCollections({ type: 'collection' }).toArray();
-    return collections.map(col => ({
+    return collections.map((col: { name: string }) => ({
       name: col.name,
       database: this.config.database as string
     }));

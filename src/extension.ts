@@ -5,6 +5,7 @@ import { ExplorerTreeProvider, ExplorerTreeItem } from './views/explorerTree';
 import { QueryPanel } from './views/queryPanel';
 import { TableStatusBar } from './views/statusBar';
 import { ConnectionConfig, DbDriver, TreeNodeData, LastViewedTable } from './types';
+import { logger } from './utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -16,7 +17,9 @@ let lastClickId: string | null = null;
 let lastClickAt = 0;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Database Explorer is now active!');
+	// Initialize logger first
+	logger.init(context);
+	logger.info('Database Explorer is activating...');
 
 	// Initialize core services
 	connectionStore = new ConnectionStore(context);
@@ -24,6 +27,16 @@ export function activate(context: vscode.ExtensionContext) {
 	explorerTreeProvider = new ExplorerTreeProvider(connectionStore, driverRegistry);
 	tableStatusBar = new TableStatusBar(context);
 	updateConnectionsContext();
+	
+	// Log any driver loading errors
+	const driverErrors = driverRegistry.getAllDriverLoadErrors();
+	if (driverErrors.size > 0) {
+		for (const [driver, error] of driverErrors) {
+			logger.warn(`Driver "${driver}" failed to load: ${error}`);
+		}
+	}
+	
+	logger.info(`Loaded ${driverRegistry.getAvailableDrivers().length} database drivers`);
 
 	// Register tree view
 	const treeView = vscode.window.createTreeView<ExplorerTreeItem>('databaseExplorer', {
@@ -56,8 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('database-explorer.refreshExplorer', () => explorerTreeProvider.refresh()),
 		vscode.commands.registerCommand('database-explorer.itemClick', (node: ExplorerTreeItem) => handleItemClick(node, context, treeView)),
 		vscode.commands.registerCommand('database-explorer.reopenLastTable', () => reopenLastTable(context)),
-		vscode.commands.registerCommand('database-explorer.openSettings', () => openSettings())
+		vscode.commands.registerCommand('database-explorer.openSettings', () => openSettings()),
+		vscode.commands.registerCommand('database-explorer.showLogs', () => logger.show())
 	);
+	
+	logger.info('Database Explorer activated successfully');
 
 	treeView.onDidExpandElement((event) => {
 		const element = event.element;

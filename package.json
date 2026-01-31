@@ -157,107 +157,19 @@
         "title": "Refresh",
         "icon": "$(refresh)",
         "category": "Database Explorer"
-      },
-      {
-        "command": "database-explorer.reopenLastTable",
-        "title": "Reopen Last Viewed Table",
-        "icon": "$(table)",
-        "category": "Database Explorer"
-      },
-      {
-        "command": "database-explorer.openSettings",
-        "title": "Open Settings",
-        "icon": "$(gear)",
-        "category": "Database Explorer"
       }
     ],
-    "configuration": {
-      "title": "Database Explorer",
-      "properties": {
-        "databaseExplorer.defaultRowLimit": {
-          "type": "number",
-          "default": 100,
-          "minimum": 1,
-          "maximum": 10000,
-          "description": "Default number of rows to fetch when previewing a table"
-        },
-        "databaseExplorer.confirmDestructiveOperations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show confirmation dialogs for destructive operations (DROP, TRUNCATE, DELETE)"
-        },
-        "databaseExplorer.autoConnect": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically connect to databases when expanding a connection in the tree"
-        },
-        "databaseExplorer.queryTimeout": {
-          "type": "number",
-          "default": 30000,
-          "minimum": 1000,
-          "maximum": 300000,
-          "description": "Query timeout in milliseconds (default: 30 seconds)"
-        },
-        "databaseExplorer.showStatusBarItem": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the last viewed table in the status bar"
-        },
-        "databaseExplorer.defaultExportFormat": {
-          "type": "string",
-          "default": "csv",
-          "enum": [
-            "csv",
-            "json",
-            "sql"
-          ],
-          "enumDescriptions": [
-            "Comma-separated values",
-            "JSON array of objects",
-            "SQL INSERT statements"
-          ],
-          "description": "Default format for exporting query results"
-        },
-        "databaseExplorer.editor.fontSize": {
-          "type": "number",
-          "default": 14,
-          "minimum": 8,
-          "maximum": 32,
-          "description": "Font size for the SQL query editor"
-        },
-        "databaseExplorer.editor.wordWrap": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable word wrap in the SQL query editor"
-        },
-        "databaseExplorer.connections.showSchemaInTree": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show schema names in the tree view (for databases that support schemas)"
-        },
-        "databaseExplorer.connections.sortTablesAlphabetically": {
-          "type": "boolean",
-          "default": true,
-          "description": "Sort tables and views alphabetically in the tree view"
-        }
-      }
-    },
     "menus": {
       "view/title": [
         {
           "command": "database-explorer.addConnection",
           "when": "view == databaseExplorer",
-          "group": "navigation@1"
+          "group": "navigation"
         },
         {
           "command": "database-explorer.refreshExplorer",
           "when": "view == databaseExplorer",
-          "group": "navigation@2"
-        },
-        {
-          "command": "database-explorer.openSettings",
-          "when": "view == databaseExplorer",
-          "group": "navigation@3"
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -288,149 +200,157 @@
         },
         {
           "command": "database-explorer.openQuery",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.openQueryLimit250",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.openDDL",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.previewTop100",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.countRows",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.exportCsv",
-          "when": "view == databaseExplorer && viewItem =~ /^table.*exportable/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyTableName",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyQualifiedName",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyColumnNames",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.refreshTable",
-          "when": "view == databaseExplorer && viewItem =~ /^table/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "navigation"
         },
         {
           "command": "database-explorer.deleteRows",
-          "when": "view == databaseExplorer && viewItem =~ /^table.*deletable/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "modification"
         },
         {
           "command": "database-explorer.truncateTable",
-          "when": "view == databaseExplorer && viewItem =~ /^table.*truncatable/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "modification"
         },
         {
           "command": "database-explorer.dropTable",
-          "when": "view == databaseExplorer && viewItem =~ /^table.*droppable/",
+          "when": "view == databaseExplorer && viewItem == table",
           "group": "modification"
         },
         {
           "command": "database-explorer.openQuery",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.openQueryLimit250",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.openDDL",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.previewTop100",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.countRows",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.exportCsv",
-          "when": "view == databaseExplorer && viewItem =~ /^view.*exportable/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyTableName",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyQualifiedName",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.copyColumnNames",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.refreshTable",
-          "when": "view == databaseExplorer && viewItem =~ /^view/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "navigation"
         },
         {
           "command": "database-explorer.dropView",
-          "when": "view == databaseExplorer && viewItem =~ /^view.*droppable/",
+          "when": "view == databaseExplorer && viewItem == view",
           "group": "modification"
         }
       ]
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
+    "vscode:prepublish": "npm run check && npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint",
+    "check:fix": "eslint src --fix",
+    "compile:webpack": "webpack",
+    "watch:webpack": "webpack --watch",
+    "package:webpack": "webpack --mode production --devtool hidden-source-map"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/mssql": "^9.1.9",
+    "@types/mssql": "^9.1.5",
     "@types/node": "22.x",
     "@types/pg": "^8.10.9",
     "@types/sql.js": "^1.4.9",
-    "@types/ssh2": "^1.15.0",
+    "@types/ssh2": "^1.15.5",
     "@types/vscode": "^1.108.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.2",
     "eslint": "^9.39.2",
+    "eslint-plugin-security": "^3.0.1",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0",
@@ -438,20 +358,12 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@aws-sdk/credential-providers": "^3.980.0",
     "@influxdata/influxdb-client": "^1.33.2",
-    "@mongodb-js/zstd": "^2.0.1",
-    "aws4": "^1.13.2",
-    "gcp-metadata": "^5.3.0",
-    "kerberos": "^2.2.2",
     "mongodb": "^6.3.0",
-    "mongodb-client-encryption": "^6.5.0",
     "mssql": "^10.0.2",
     "mysql2": "^3.6.5",
     "pg": "^8.11.3",
     "pg-native": "^3.5.2",
-    "snappy": "^7.3.3",
-    "socks": "^2.8.7",
     "sql.js": "^1.10.2",
     "ssh2": "^1.15.0"
   }

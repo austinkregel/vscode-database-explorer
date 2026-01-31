@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { DbDriver, ConnectionConfig, QueryResult } from '../types';
+import { DbDriver, ConnectionConfig } from '../types';
+import { logger } from '../utils/logger';
 
 export class QueryPanel {
   public static currentPanel: QueryPanel | undefined;
   private static readonly viewType = 'databaseExplorer.queryPanel';
 
   private readonly _panel: vscode.WebviewPanel;
-  private readonly _extensionUri: vscode.Uri;
   private _disposables: vscode.Disposable[] = [];
   private _driver: DbDriver;
   private _connection: ConnectionConfig;
@@ -18,12 +18,20 @@ export class QueryPanel {
     initialQuery: string = '',
     autoRun: boolean = false
   ): void {
+    logger.debug('QueryPanel.createOrShow called', {
+      connectionName: connection.name,
+      connectionType: connection.type,
+      hasInitialQuery: !!initialQuery,
+      autoRun
+    });
+
     const column = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
 
     // If we already have a panel, show it
     if (QueryPanel.currentPanel) {
+      logger.debug('Reusing existing QueryPanel');
       QueryPanel.currentPanel._panel.reveal(column);
       QueryPanel.currentPanel._driver = driver;
       QueryPanel.currentPanel._connection = connection;
@@ -32,6 +40,7 @@ export class QueryPanel {
     }
 
     // Create a new panel
+    logger.debug('Creating new QueryPanel');
     const panel = vscode.window.createWebviewPanel(
       QueryPanel.viewType,
       `Query: ${connection.name}`,
@@ -44,18 +53,18 @@ export class QueryPanel {
     );
 
     QueryPanel.currentPanel = new QueryPanel(panel, extensionUri, connection, driver, initialQuery, autoRun);
+    logger.info(`QueryPanel created for connection: ${connection.name}`);
   }
 
   private constructor(
     panel: vscode.WebviewPanel,
-    extensionUri: vscode.Uri,
+    _extensionUri: vscode.Uri,  // Reserved for future resource loading
     connection: ConnectionConfig,
     driver: DbDriver,
     initialQuery: string,
     autoRun: boolean
   ) {
     this._panel = panel;
-    this._extensionUri = extensionUri;
     this._connection = connection;
     this._driver = driver;
 
@@ -64,22 +73,35 @@ export class QueryPanel {
     // Handle messages from the webview
     this._panel.webview.onDidReceiveMessage(
       async (message) => {
-        switch (message.command) {
-          case 'executeQuery':
-            await this._executeQuery(message.sql);
-            break;
-          case 'getDDL':
-            await this._getDDL(message.table, message.schema);
-            break;
-          case 'insertRow':
-            await this._insertRow(message.table, message.schema, message.data);
-            break;
-          case 'updateRow':
-            await this._updateRow(message.table, message.schema, message.primaryKeys, message.data);
-            break;
-          case 'deleteRow':
-            await this._deleteRow(message.table, message.schema, message.primaryKeys);
-            break;
+        // Handle log messages from webview
+        if (message.command === 'log') {
+          logger.debug(`[Webview] ${message.message}`);
+          return;
+        }
+        
+        logger.debug('QueryPanel received message', { command: message.command });
+        try {
+          switch (message.command) {
+            case 'executeQuery':
+              await this._executeQuery(message.sql);
+              break;
+            case 'getDDL':
+              await this._getDDL(message.table, message.schema);
+              break;
+            case 'insertRow':
+              await this._insertRow(message.table, message.schema, message.data);
+              break;
+            case 'updateRow':
+              await this._updateRow(message.table, message.schema, message.primaryKeys, message.data);
+              break;
+            case 'deleteRow':
+              await this._deleteRow(message.table, message.schema, message.primaryKeys);
+              break;
+            default:
+              logger.warn(`Unknown message command: ${message.command}`);
+          }
+        } catch (err) {
+          logger.error(`Error handling message ${message.command}`, err);
         }
       },
       null,
@@ -91,14 +113,20 @@ export class QueryPanel {
   }
 
   private async _executeQuery(sql: string): Promise<void> {
+    logger.debug('Executing query', { sqlPreview: sql.substring(0, 100) });
+    const startTime = Date.now();
     try {
       const result = await this._driver.executeQuery(sql);
+      const duration = Date.now() - startTime;
+      logger.info(`Query executed in ${duration}ms, returned ${result.rowCount} rows`);
       this._panel.webview.postMessage({
         type: 'queryResult',
         result,
         sql
       });
     } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error(`Query failed after ${duration}ms`, error);
       this._panel.webview.postMessage({
         type: 'error',
         message: error instanceof Error ? error.message : String(error)
@@ -172,8 +200,14 @@ export class QueryPanel {
   }
 
   private _updateWebview(initialQuery: string, autoRun: boolean): void {
+    logger.debug('Updating webview', { 
+      hasInitialQuery: !!initialQuery, 
+      queryLength: initialQuery.length,
+      autoRun 
+    });
     this._panel.title = `Query: ${this._connection.name}`;
     this._panel.webview.html = this._getHtmlForWebview(initialQuery, autoRun);
+    logger.debug('Webview HTML set successfully');
   }
 
   private _getHtmlForWebview(initialQuery: string, autoRun: boolean): string {
@@ -536,6 +570,11 @@ export class QueryPanel {
     </div>
 
     <div class="results-section">
+      <noscript>
+        <div style="padding: 20px; background: #ff000033; color: red; border: 1px solid red; margin: 10px;">
+          JavaScript is disabled or blocked. Check Content Security Policy.
+        </div>
+      </noscript>
       <div id="messageContainer"></div>
       <div class="results-header">
         <span class="results-info" id="resultsInfo">No results</span>
@@ -553,15 +592,49 @@ export class QueryPanel {
   </div>
 
   <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
+    // Immediately try to establish communication
+    let vscode;
+    try {
+      vscode = acquireVsCodeApi();
+      vscode.postMessage({ command: 'log', message: 'Webview script starting...' });
+    } catch (e) {
+      console.error('Failed to acquire VS Code API:', e);
+    }
+    
     const autoRun = ${autoRun ? 'true' : 'false'};
-    window.onerror = function(message) {
+    
+    // Global error handlers
+    window.onerror = function(message, source, lineno, colno, error) {
+      const errorMsg = 'JS Error: ' + message + ' at line ' + lineno;
+      console.error(errorMsg, error);
+      if (vscode) {
+        vscode.postMessage({ command: 'log', message: errorMsg });
+      }
       const existing = document.getElementById('messageContainer');
       if (existing) {
-        existing.innerHTML = '<div class="message message-error">Webview error: ' + message + '</div>';
+        existing.innerHTML = '<div class="message message-error">' + errorMsg + '</div>';
+      }
+      return false;
+    };
+    
+    window.onunhandledrejection = function(event) {
+      const errorMsg = 'Unhandled Promise rejection: ' + event.reason;
+      console.error(errorMsg);
+      if (vscode) {
+        vscode.postMessage({ command: 'log', message: errorMsg });
       }
     };
-    vscode.postMessage({ command: 'log', message: 'Query panel script loaded' });
+    
+    if (vscode) {
+      vscode.postMessage({ command: 'log', message: 'Query panel script loaded, autoRun=' + autoRun });
+    }
+    
+    // Visual indicator that JS is running
+    const msgContainer = document.getElementById('messageContainer');
+    if (msgContainer) {
+      msgContainer.innerHTML = '<div style="padding: 8px; background: #00ff0033; color: green;">JavaScript loaded successfully</div>';
+      setTimeout(() => { msgContainer.innerHTML = ''; }, 2000);
+    }
     
     let currentResult = null;
     let currentSql = '';
@@ -1095,5 +1168,8 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#039;')
+    .replace(/`/g, '&#96;')      // Escape backticks for template literals
+    .replace(/\\/g, '&#92;')     // Escape backslashes
+    .replace(/\$/g, '&#36;');    // Escape $ to prevent ${} interpolation
 }

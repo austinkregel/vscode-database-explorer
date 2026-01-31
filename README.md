@@ -136,15 +136,24 @@ Click the **gear icon** in the Database Explorer panel header, or use the comman
 # Install dependencies
 npm install
 
-# Compile the extension
+# Compile the extension (fast, ~150ms with esbuild)
 npm run compile
 
 # Watch for changes
 npm run watch
 
-# Package for distribution
+# Package for distribution (minified)
 npm run package
 ```
+
+### Build System
+
+The extension uses **esbuild** for fast bundling:
+
+| Build Type | Time | Size |
+|------------|------|------|
+| Development | ~150ms | 6.2 MB |
+| Production | ~150ms | 3.5 MB |
 
 ### Publishing the Extension
 
@@ -162,7 +171,7 @@ vsce publish
 **Note on Native Dependencies:**
 
 Some database drivers use optional native modules (e.g., MongoDB's Kerberos authentication, compression). These are:
-- **Externalized in webpack** - Not bundled into the main extension.js
+- **Externalized in esbuild** - Not bundled into the main extension.js
 - **Included via node_modules** - The `.vscodeignore` is configured to include production dependencies
 - **Gracefully handled** - If a driver fails to load, other drivers still work
 

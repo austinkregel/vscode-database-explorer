@@ -1,4 +1,4 @@
-import { Client, ConnectConfig } from 'ssh2';
+import { Client, ConnectConfig, ClientChannel } from 'ssh2';
 import * as net from 'net';
 import * as fs from 'fs';
 import { ProxyConfig } from '../types';
@@ -79,7 +79,7 @@ export class SSHTunnel {
             socket.remotePort || 0,
             targetHost,
             targetPort,
-            (err, stream) => {
+            (err: Error | undefined, stream: ClientChannel) => {
               if (err) {
                 socket.end();
                 return;
@@ -106,7 +106,7 @@ export class SSHTunnel {
         });
       });
 
-      this.client.on('error', (err) => {
+      this.client.on('error', (err: Error) => {
         reject(new Error(`SSH connection error: ${err.message}`));
       });
 

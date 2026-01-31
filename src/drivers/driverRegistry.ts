@@ -1,4 +1,4 @@
-import { DbDriver, ConnectionConfig, DriverMetadata, DriverCapabilities } from '../types';
+import { DbDriver, DriverMetadata, DriverCapabilities } from '../types';
 import { ConnectionStore } from '../storage/connectionStore';
 import { DriverFactory } from './driverFactory';
 
